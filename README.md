@@ -1,6 +1,6 @@
 # AI Chatbot
 
-Full-stack chatbot application built with React, Node.js, TypeScript, and PostgreSQL.
+Full-stack chatbot application matching the provided reference UI.
 
 ## Stack
 
@@ -22,11 +22,15 @@ ai-chatbot/
 └── package.json
 ```
 
-## Requirements
+## Database model
 
-- Node.js 20.11+
-- npm
-- PostgreSQL 13+
+The first migration creates:
+
+- `uploaded_files` — uploaded file metadata used by the file selector.
+- `chats` — conversation history and the currently selected file.
+- `messages` — user/assistant/system messages belonging to a chat.
+
+All schema changes must be made through new migration files. Never manually alter the PostgreSQL schema for application changes.
 
 ## Development
 
@@ -36,22 +40,22 @@ Install dependencies:
 npm install
 ```
 
-Run frontend:
+Run the frontend:
 
 ```bash
 npm run dev:frontend
 ```
 
-Run backend:
+Run the backend:
 
 ```bash
 npm run dev:backend
 ```
 
-Run database migrations:
+Apply PostgreSQL migrations:
 
 ```bash
 npm run db:migrate
 ```
 
-> Database schema changes must be made through migrations. Do not manually change the PostgreSQL schema.
+The current UI implements the reference layout, chat-history loading, new-chat creation, message persistence, and uploaded-file listing. AI response generation and actual file storage/upload will be added in the next feature phase.

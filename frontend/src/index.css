@@ -7,10 +7,12 @@ body,
 #root {
   width: 100%;
   height: 100%;
+  min-height: 100%;
   margin: 0;
 }
 
 body {
+  overflow: hidden;
   font-family: Arial, Helvetica, sans-serif;
   color: #222;
   background: #fff;
@@ -22,11 +24,16 @@ select {
   font: inherit;
 }
 
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
 .app {
   display: flex;
   width: 100%;
-  height: 100%;
-  min-height: 600px;
+  height: 100vh;
+  min-height: 560px;
+  background: #fff;
 }
 
 .sidebar {
@@ -34,8 +41,8 @@ select {
   width: 280px;
   flex: 0 0 280px;
   padding: 16px;
-  border-right: 1px solid #d9d9d9;
-  background: #f7f7f7;
+  border-right: 1px solid #d7d7d7;
+  background: #f8f8f8;
 }
 
 .file-select {
@@ -44,69 +51,151 @@ select {
   padding: 0 10px;
   border: 1px solid #bdbdbd;
   border-radius: 4px;
+  outline: none;
   background: #fff;
+  color: #333;
+  cursor: pointer;
+}
+
+.file-select:focus {
+  border-color: #8f8f8f;
 }
 
 .sidebar h2 {
-  margin: 18px 0 10px;
+  margin: 18px 0 9px;
   font-size: 16px;
+  line-height: 20px;
 }
 
 .history-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 1px;
 }
 
 .history-item {
   display: grid;
-  grid-template-columns: 55px 1fr 20px;
-  gap: 4px;
+  grid-template-columns: 57px minmax(0, 1fr) 22px;
+  align-items: center;
   width: 100%;
-  padding: 7px 4px;
+  min-height: 35px;
+  padding: 5px 3px;
   border: 0;
+  border-radius: 3px;
   background: transparent;
+  color: #303030;
   text-align: left;
   cursor: pointer;
   font-size: 13px;
 }
 
-.history-item:hover {
-  background: #e9e9e9;
+.history-item:hover,
+.history-item.active {
+  background: #ececec;
+}
+
+.history-title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.more-button {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+}
+
+.more-button svg {
+  width: 16px;
+  height: 16px;
+  fill: #777;
+  stroke: none;
 }
 
 .new-chat {
   position: absolute;
-  left: 17px;
-  bottom: 16px;
+  left: 16px;
+  bottom: 15px;
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  padding: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
-  font-size: 22px;
+}
+
+.new-chat svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: #444;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .chat-panel {
   display: flex;
   flex: 1;
   min-width: 0;
+  min-height: 0;
   flex-direction: column;
+  background: #fff;
 }
 
 .chat-messages {
   flex: 1;
   min-height: 0;
+  overflow-y: auto;
+  padding: 24px 28px 12px;
+}
+
+.message {
+  display: flex;
+  margin-bottom: 12px;
+}
+
+.message.user {
+  justify-content: flex-end;
+}
+
+.message.assistant {
+  justify-content: flex-start;
+}
+
+.message-bubble {
+  max-width: min(720px, 80%);
+  padding: 9px 13px;
+  border-radius: 12px;
+  background: #f1f1f1;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.message.user .message-bubble {
+  background: #e8f2f8;
 }
 
 .message-form {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 0 0 52px;
   margin: 0 8px 8px;
-  padding: 0 12px;
-  height: 52px;
+  padding: 0 10px 0 13px;
   border: 1px solid #cfcfcf;
   border-radius: 12px;
   background: #fff;
+}
+
+.message-form:focus-within {
+  border-color: #a8a8a8;
 }
 
 .message-form input {
@@ -115,14 +204,38 @@ select {
   height: 100%;
   border: 0;
   outline: 0;
+  background: transparent;
+  color: #222;
+}
+
+.message-form input::placeholder {
+  color: #8d8d8d;
 }
 
 .message-form button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
   border: 0;
   background: transparent;
   color: #1479b8;
   cursor: pointer;
-  font-size: 20px;
+}
+
+.message-form button:hover {
+  color: #0b679f;
+}
+
+.message-form button svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 @media (max-width: 700px) {
@@ -132,10 +245,34 @@ select {
   }
 
   .history-item {
-    grid-template-columns: 45px 1fr;
+    grid-template-columns: 45px minmax(0, 1fr) 20px;
   }
 
-  .history-item span:last-child {
+  .chat-messages {
+    padding: 18px 14px 10px;
+  }
+}
+
+@media (max-width: 520px) {
+  .sidebar {
+    width: 190px;
+    flex-basis: 190px;
+    padding: 12px;
+  }
+
+  .file-select {
+    font-size: 12px;
+  }
+
+  .history-item {
+    grid-template-columns: 1fr 18px;
+  }
+
+  .history-item > span:first-child {
     display: none;
+  }
+
+  .message-form {
+    margin: 0 6px 6px;
   }
 }
