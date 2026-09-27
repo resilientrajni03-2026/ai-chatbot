@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:4000/api';
+const API_URL = (import.meta.env.VITE_API_URL ?? 'http://localhost:5000/api').replace(/\/$/, '');
 
 function Icon({ name, size = 18 }) {
   const paths = {
@@ -53,19 +53,11 @@ function App() {
       .catch(() => setMessages([]));
   }, [selectedChatId]);
 
-  async function createChat() {
-    try {
-      const response = await fetch(`${API_URL}/chats`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: 'New chat' }),
-      });
-      if (!response.ok) return;
-      const data = await response.json();
-      setChats((current) => [data.chat, ...current]);
-      setSelectedChatId(data.chat.id);
-      setMessages([]);
-    } catch {}
+  function createChat() {
+    // A new DB chat is created only when the user submits the first message.
+    setSelectedChatId(null);
+    setMessages([]);
+    setMessage('');
   }
 
   async function handleSubmit(event) {
@@ -73,33 +65,50 @@ function App() {
     const content = message.trim();
     if (!content) return;
 
-    let chatId = selectedChatId;
-
-    if (!chatId) {
-      try {
-        const response = await fetch(`${API_URL}/chats`, {
+    try {
+      if (!selectedChatId) {
+        // First message: backend creates the chat + message atomically.
+        const response = await fetch(`${API_URL}/chats/submit`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: content.slice(0, 45) }),
+          body: JSON.stringify({ content }),
         });
+
+        if (!response.ok) return;
+
         const data = await response.json();
-        chatId = data.chat.id;
-        setChats((current) => [data.chat, ...current]);
-        setSelectedChatId(chatId);
-      } catch {
+
+        setChats((current) => [
+          data.chat,
+          ...current.filter((chat) => chat.id !== data.chat.id),
+        ]);
+        setSelectedChatId(data.chat.id);
+        setMessages([data.message]);
+        setMessage('');
         return;
       }
-    }
 
-    try {
-      const response = await fetch(`${API_URL}/chats/${chatId}/messages`, {
+      // Existing chat: save only the new message.
+      const response = await fetch(`${API_URL}/chats/${selectedChatId}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content }),
       });
+
       if (!response.ok) return;
+
       const data = await response.json();
+
       setMessages((current) => [...current, data.message]);
+      setChats((current) =>
+        current
+          .map((chat) =>
+            chat.id === selectedChatId
+              ? { ...chat, updated_at: data.message.created_at }
+              : chat,
+          )
+          .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
+      );
       setMessage('');
     } catch {}
   }
