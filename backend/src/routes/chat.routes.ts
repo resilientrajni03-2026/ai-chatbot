@@ -93,18 +93,18 @@ router.post('/submit', async (req, res, next) => {
       [messageId, chatId, content],
     );
 
-    await client.query(
-      'UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+    const updatedChatResult = await client.query(
+      `UPDATE chats
+       SET updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1
+       RETURNING id, title, selected_file_id, created_at, updated_at`,
       [chatId],
     );
 
     await client.query('COMMIT');
 
     res.status(201).json({
-      chat: {
-        ...chatResult.rows[0],
-        updated_at: new Date().toISOString(),
-      },
+      chat: updatedChatResult.rows[0] ?? chatResult.rows[0],
       message: messageResult.rows[0],
     });
   } catch (error) {
