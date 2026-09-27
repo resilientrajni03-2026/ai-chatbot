@@ -1,0 +1,20 @@
+{
+  "name": "ai-chatbot",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev:frontend": "npm --workspace frontend run dev",
+    "build:frontend": "npm --workspace frontend run build",
+    "dev:backend": "npm --workspace backend run dev",
+    "build:backend": "npm --workspace backend run build",
+    "db:migrate": "npm --workspace backend run db:migrate",
+    "db:migrate:create": "npm --workspace backend run db:migrate:create"
+  },
+  "engines": {
+    "node": ">=20.11.0"
+  }
+}
