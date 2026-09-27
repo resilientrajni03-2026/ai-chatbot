@@ -54,6 +54,72 @@ router.post('/', async (req, res, next) => {
   }
 });
 
+/**
+ * Creates a chat and saves its first user message in one transaction.
+ * This is the endpoint used when the user submits the first message
+ * of a brand-new conversation.
+ */
+router.post('/submit', async (req, res, next) => {
+  const client = await db.connect();
+
+  try {
+    const content = typeof req.body?.content === 'string' ? req.body.content.trim() : '';
+
+    if (!content) {
+      client.release();
+      res.status(400).json({ message: 'Message content is required.' });
+      return;
+    }
+
+    const title = typeof req.body?.title === 'string' && req.body.title.trim()
+      ? req.body.title.trim().slice(0, 255)
+      : content.slice(0, 45);
+
+    await client.query('BEGIN');
+
+    const chatId = createId();
+    const chatResult = await client.query(
+      `INSERT INTO chats (id, title)
+       VALUES ($1, $2)
+       RETURNING id, title, selected_file_id, created_at, updated_at`,
+      [chatId, title],
+    );
+
+    const messageId = createId();
+    const messageResult = await client.query(
+      `INSERT INTO messages (id, chat_id, role, content)
+       VALUES ($1, $2, 'user', $3)
+       RETURNING id, chat_id, role, content, created_at`,
+      [messageId, chatId, content],
+    );
+
+    await client.query(
+      'UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+      [chatId],
+    );
+
+    await client.query('COMMIT');
+
+    res.status(201).json({
+      chat: {
+        ...chatResult.rows[0],
+        updated_at: new Date().toISOString(),
+      },
+      message: messageResult.rows[0],
+    });
+  } catch (error) {
+    try {
+      await client.query('ROLLBACK');
+    } catch (rollbackError) {
+      console.error('Failed to rollback chat creation:', rollbackError);
+    }
+
+    next(error);
+  } finally {
+    client.release();
+  }
+});
+
 router.post('/:chatId/messages', async (req, res, next) => {
   try {
     const content = typeof req.body?.content === 'string' ? req.body.content.trim() : '';
